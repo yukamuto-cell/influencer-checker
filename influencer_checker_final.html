@@ -331,24 +331,21 @@
         return;
       }
       
-      // 排除期間をチェック（同じカテゴリの場合のみ）
+      // 全案件をチェック（同じカテゴリのみ）
       const assignDateObj = new Date(assignDate);
       let hasConflict = false;
-      let conflictReason = '';
       
-      for (const proj of influencerProjects) {
+      const checkedProjects = influencerProjects.map(proj => {
         const postDate = new Date(proj.投稿日);
-        const excludeDays = parseInt(proj.排除期間) || 90;
-        const excludeEndDate = new Date(postDate);
-        excludeEndDate.setDate(excludeEndDate.getDate() + excludeDays);
-        
-        // 同じカテゴリ AND 排除期間中
-        if (selectedCategories.includes(proj.カテゴリ) && assignDateObj <= excludeEndDate) {
-          hasConflict = true;
-          conflictReason = `${proj.案件名} (${formatDate(excludeEndDate)}まで排除)`;
-          break;
-        }
-      }
+        const ngStartDate = new Date(postDate);
+        ngStartDate.setMonth(ngStartDate.getMonth() - 2);
+        const excludeEndDate = new Date(proj.排除終了日);
+        const isSameCategory = selectedCategories.includes(proj.カテゴリ);
+        const isNgPeriod = assignDateObj >= ngStartDate && assignDateObj <= excludeEndDate;
+        const isNg = isSameCategory && isNgPeriod;
+        if (isNg) hasConflict = true;
+        return { proj, ngStartDate, excludeEndDate, isNg, isSameCategory };
+      });
       
       let html = `
         <div class="result-box show ${hasConflict ? 'danger' : 'success'}">
@@ -360,23 +357,24 @@
       `;
       
       if (hasConflict) {
-        html += `<p style="color: #ef4444;"><strong>⚠️ 排除期間中: ${conflictReason}</strong></p>`;
+        html += `<p style="color: #ef4444;"><strong>⚠️ 競合する案件があります</strong></p>`;
       } else {
-        html += `<p style="color: #10b981;"><strong>✅ 排除期間は終了</strong></p>`;
+        html += `<p style="color: #10b981;"><strong>✅ アサイン可能</strong></p>`;
       }
       
       html += `<p style="margin-top: 1rem; font-weight: 600; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.75rem;">📋 過去案件一覧</p>`;
       
-      for (const proj of influencerProjects) {
-        const postDate = new Date(proj.投稿日);
-        const excludeDays = parseInt(proj.排除期間) || 90;
-        const excludeEndDate = new Date(postDate);
-        excludeEndDate.setDate(excludeEndDate.getDate() + excludeDays);
-        
+      for (const { proj, ngStartDate, excludeEndDate, isNg, isSameCategory } of checkedProjects) {
+        const borderColor = isNg ? '#ef4444' : '#10b981';
+        const bgColor = isNg ? '#fff5f5' : '#f9f9f9';
+        const statusIcon = isNg ? '❌' : '✅';
         html += `
-          <div class="project-item">
-            <strong>${proj.案件名}</strong> - ${proj.カテゴリ}<br>
-            投稿: ${formatDate(postDate)} → 排除終了: ${formatDate(excludeEndDate)}
+          <div class="project-item" style="border-left-color: ${borderColor}; background: ${bgColor};">
+            ${statusIcon} <strong>${proj.案件名}</strong> - ${proj.カテゴリ}<br>
+            <span style="font-size: 12px; color: #666;">
+              NG期間: ${formatDate(ngStartDate)} 〜 ${formatDate(excludeEndDate)}
+              ${!isSameCategory ? '（カテゴリ違いのため対象外）' : ''}
+            </span>
           </div>
         `;
       }
