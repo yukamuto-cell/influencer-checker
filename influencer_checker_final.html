@@ -331,7 +331,7 @@
         return;
       }
       
-      // 排除期間をチェック
+      // 排除期間をチェック（同じカテゴリの場合のみ）
       const assignDateObj = new Date(assignDate);
       let hasConflict = false;
       let conflictReason = '';
@@ -342,7 +342,8 @@
         const excludeEndDate = new Date(postDate);
         excludeEndDate.setDate(excludeEndDate.getDate() + excludeDays);
         
-        if (assignDateObj <= excludeEndDate) {
+        // 同じカテゴリ AND 排除期間中
+        if (selectedCategories.includes(proj.カテゴリ) && assignDateObj <= excludeEndDate) {
           hasConflict = true;
           conflictReason = `${proj.案件名} (${formatDate(excludeEndDate)}まで排除)`;
           break;
