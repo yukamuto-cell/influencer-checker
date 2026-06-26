@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>インフルエンサー競合チェック</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+    
+    .header {
+      margin-bottom: 2rem;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .header p {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .section {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      margin: -1.25rem -1.25rem 1rem -1.25rem;
+      padding: 0.75rem 1.25rem;
+      background: #f9f9f9;
+      border-bottom: 1px solid #e0e0e0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-radius: 11px 11px 0 0;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    input, select {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      color: #333;
+    }
+    
+    select[multiple] {
+      min-height: 100px;
+    }
+    
+    button {
+      padding: 0.75rem 1.5rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      background: white;
+    }
+    
+    button.primary {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      flex: 1;
+    }
+    
+    button:hover {
+      background: #f5f5f5;
+    }
+    
+    button.primary:hover {
+      background: #2563eb;
+    }
+    
+    .category-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: white;
+      color: #333;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    
+    .category-btn:hover {
+      border-color: #3b82f6;
+      background: #f0f7ff;
+    }
+    
+    .category-btn.selected {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    
+    .status-ready {
+      background: #dcfce7;
+      color: #166534;
+    }
+    
+    .result-box {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 1.5rem;
+      display: none;
+    }
+    
+    .result-box.show {
+      display: block;
+    }
+    
+    .result-box.success {
+      border-left: 4px solid #10b981;
+      background: #f0fdf4;
+    }
+    
+    .result-box.danger {
+      border-left: 4px solid #ef4444;
+      background: #fef2f2;
+    }
+    
+    .result-status {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    
+    .status-ok { color: #10b981; }
+    .status-ng { color: #ef4444; }
+    
+    .result-detail {
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    
+    .result-detail p {
+      margin: 0.75rem 0;
+    }
+    
+    .project-item {
+      font-size: 13px;
+      margin: 0.75rem 0;
+      padding: 0.75rem;
+      background: #f9f9f9;
+      border-radius: 8px;
+      border-left: 3px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>インフルエンサー競合チェック</h1>
+      <p>過去案件と競合していないか確認します</p>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">📊 データ状態</div>
+      <div id="statusBadge" class="status-badge" style="background: #fef3c7; color: #92400e;">読み込み中...</div>
+      <div id="dataInfo" style="font-size: 13px; color: #666; margin-bottom: 1rem;">スプシからデータを読み込んでいます...</div>
+      <button onclick="loadData()">再度読み込む</button>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">🔍 検索条件</div>
+      
+      <div class="form-group">
+        <label>インフルエンサー名 *</label>
+        <input type="text" id="influencer" placeholder="例: gupitaro">
+      </div>
+      
+      <div class="form-group">
+        <label>予定アサイン日 *</label>
+        <input type="date" id="assignDate" value="2026-06-15">
+      </div>
+      
+      <div class="form-group">
+        <label>案件カテゴリ（複数選択可）*</label>
+        <div id="categoryButtons" style="display: flex; flex-wrap: wrap; gap: 0.75rem;"></div>
+      </div>
+      
+      <div style="display: flex; gap: 0.75rem;">
+        <button class="primary" onclick="checkConflict()">検索</button>
+        <button onclick="resetForm()">リセット</button>
+      </div>
+    </div>
+    
+    <div id="resultContainer"></div>
+  </div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwyKoJAJz-B18MTpz46C7loNt6i12ZdpG4BEoOqq4Nu5HkF53xiOGO8zKDeKfXgenrl/exec";
+    
+    let pastProjects = [];
+    const categories = [
+      "ドッグフード",
+      "キャットフード",
+      "犬用おやつ",
+      "猫用おやつ",
+      "ペット用サプリ・栄養補助食品",
+      "犬用衣類・アクセサリー",
+      "猫用衣類・アクセサリー",
+      "ペット用美容・シャンプー",
+      "ペット保険",
+      "ペット用おもちゃ・遊具"
+    ];
+
+    let selectedCategories = [];
+
+    function loadData() {
+      const statusBadge = document.getElementById('statusBadge');
+      const dataInfo = document.getElementById('dataInfo');
+      
+      statusBadge.textContent = '読み込み中...';
+      
+      fetch(GAS_URL)
+        .then(res => res.json())
+        .then(data => {
+          pastProjects = Array.isArray(data) ? data : [];
+          
+          statusBadge.className = 'status-badge status-ready';
+          statusBadge.textContent = '✅ データ読み込み完了';
+          dataInfo.innerHTML = `<strong>${pastProjects.length}件</strong> の過去案件が読み込まれました`;
+          
+          // カテゴリボタンを生成
+          const categoryButtons = document.getElementById('categoryButtons');
+          categoryButtons.innerHTML = '';
+          categories.forEach(cat => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'category-btn';
+            btn.textContent = cat;
+            btn.onclick = (e) => {
+              e.preventDefault();
+              btn.classList.toggle('selected');
+              updateSelectedCategories();
+            };
+            categoryButtons.appendChild(btn);
+          });
+        })
+        .catch(err => {
+          statusBadge.textContent = '❌ エラー';
+          dataInfo.textContent = err.message;
+        });
+    }
+
+    function updateSelectedCategories() {
+      const buttons = document.querySelectorAll('.category-btn');
+      selectedCategories = Array.from(buttons)
+        .filter(btn => btn.classList.contains('selected'))
+        .map(btn => btn.textContent);
+    }
+
+    function checkConflict() {
+      const influencer = document.getElementById('influencer').value.trim();
+      const assignDate = document.getElementById('assignDate').value;
+      
+      if (!influencer || !assignDate || selectedCategories.length === 0) {
+        alert('すべてのフィールドを入力してください');
+        return;
+      }
+      
+      // このインフルエンサーの過去案件を探す
+      const influencerProjects = pastProjects.filter(p => {
+        if (!p || !p.インフルエンサー) return false;
+        const inflName = (p.インフルエンサー || '').trim();
+        return inflName === influencer;
+      });
+      
+      const resultContainer = document.getElementById('resultContainer');
+      
+      if (influencerProjects.length === 0) {
+        resultContainer.innerHTML = `
+          <div class="result-box show success">
+            <div class="result-status status-ok">✅ OK</div>
+            <p><strong>${influencer}</strong> の過去案件がないため、制約なくアサインできます。</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // 排除期間をチェック
+      const assignDateObj = new Date(assignDate);
+      let hasConflict = false;
+      let conflictReason = '';
+      
+      for (const proj of influencerProjects) {
+        const postDate = new Date(proj.投稿日);
+        const excludeDays = parseInt(proj.排除期間) || 90;
+        const excludeEndDate = new Date(postDate);
+        excludeEndDate.setDate(excludeEndDate.getDate() + excludeDays);
+        
+        if (assignDateObj <= excludeEndDate) {
+          hasConflict = true;
+          conflictReason = `${proj.案件名} (${formatDate(excludeEndDate)}まで排除)`;
+          break;
+        }
+      }
+      
+      let html = `
+        <div class="result-box show ${hasConflict ? 'danger' : 'success'}">
+          <div class="result-status ${hasConflict ? 'status-ng' : 'status-ok'}">
+            ${hasConflict ? '❌ NG' : '✅ OK'}
+          </div>
+          <div class="result-detail">
+            <p><strong>${influencer}</strong> の過去案件：<strong>${influencerProjects.length}件</strong></p>
+      `;
+      
+      if (hasConflict) {
+        html += `<p style="color: #ef4444;"><strong>⚠️ 排除期間中: ${conflictReason}</strong></p>`;
+      } else {
+        html += `<p style="color: #10b981;"><strong>✅ 排除期間は終了</strong></p>`;
+      }
+      
+      html += `<p style="margin-top: 1rem; font-weight: 600; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.75rem;">📋 過去案件一覧</p>`;
+      
+      for (const proj of influencerProjects) {
+        const postDate = new Date(proj.投稿日);
+        const excludeDays = parseInt(proj.排除期間) || 90;
+        const excludeEndDate = new Date(postDate);
+        excludeEndDate.setDate(excludeEndDate.getDate() + excludeDays);
+        
+        html += `
+          <div class="project-item">
+            <strong>${proj.案件名}</strong> - ${proj.カテゴリ}<br>
+            投稿: ${formatDate(postDate)} → 排除終了: ${formatDate(excludeEndDate)}
+          </div>
+        `;
+      }
+      
+      html += `</div></div>`;
+      
+      resultContainer.innerHTML = html;
+    }
+
+    function formatDate(date) {
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${month}月${day}日`;
+    }
+
+    function resetForm() {
+      document.getElementById('influencer').value = '';
+      document.getElementById('assignDate').value = '2026-06-15';
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      selectedCategories = [];
+      document.getElementById('resultContainer').innerHTML = '';
+    }
+
+    // 初期化
+    window.addEventListener('load', loadData);
+  </script>
+</body>
+</html>
