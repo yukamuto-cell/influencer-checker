@@ -244,19 +244,6 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwyKoJAJz-B18MTpz46C7loNt6i12ZdpG4BEoOqq4Nu5HkF53xiOGO8zKDeKfXgenrl/exec";
     
     let pastProjects = [];
-    const categories = [
-      "ドッグフード",
-      "キャットフード",
-      "犬用おやつ",
-      "猫用おやつ",
-      "ペット用サプリ・栄養補助食品",
-      "犬用衣類・アクセサリー",
-      "猫用衣類・アクセサリー",
-      "ペット用美容・シャンプー",
-      "ペット保険",
-      "ペット用おもちゃ・遊具"
-    ];
-
     let selectedCategories = [];
 
     function loadData() {
@@ -268,13 +255,14 @@
       fetch(GAS_URL)
         .then(res => res.json())
         .then(data => {
-          pastProjects = Array.isArray(data) ? data : [];
+          pastProjects = Array.isArray(data.projects) ? data.projects : [];
+          const categories = Array.isArray(data.categories) ? data.categories : [];
           
           statusBadge.className = 'status-badge status-ready';
           statusBadge.textContent = '✅ データ読み込み完了';
           dataInfo.innerHTML = `<strong>${pastProjects.length}件</strong> の過去案件が読み込まれました`;
           
-          // カテゴリボタンを生成
+          // カテゴリボタンを生成（GASから取得したカテゴリを使用）
           const categoryButtons = document.getElementById('categoryButtons');
           categoryButtons.innerHTML = '';
           categories.forEach(cat => {
