@@ -255,8 +255,20 @@
       fetch(GAS_URL)
         .then(res => res.json())
         .then(data => {
-          pastProjects = Array.isArray(data.projects) ? data.projects : [];
-          const categories = Array.isArray(data.categories) ? data.categories : [];
+          // GASが配列形式でもオブジェクト形式でも対応
+          if (Array.isArray(data)) {
+            pastProjects = data;
+          } else {
+            pastProjects = Array.isArray(data.projects) ? data.projects : [];
+          }
+          // カテゴリ：GASから取得できればそれを使い、なければ過去案件から自動抽出
+          let categories = [];
+          if (!Array.isArray(data) && Array.isArray(data.categories) && data.categories.length > 0) {
+            categories = data.categories;
+          } else {
+            const catSet = new Set(pastProjects.map(p => p['カテゴリ']).filter(Boolean));
+            categories = Array.from(catSet).sort();
+          }
           
           statusBadge.className = 'status-badge status-ready';
           statusBadge.textContent = '✅ データ読み込み完了';
