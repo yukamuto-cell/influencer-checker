@@ -373,7 +373,8 @@
             ${statusIcon} <strong>${proj.案件名}</strong> - ${proj.カテゴリ}<br>
             <span style="font-size: 12px; color: #666; line-height: 1.8;">
               📅 投稿予定日: ${formatDate(proj.投稿日 ? new Date(proj.投稿日) : ngStartDate)}<br>
-              🚫 NG期間: ${formatDate(ngStartDate)} 〜 ${formatDate(excludeEndDate)}
+              🚫 NG期間: ${formatDate(ngStartDate)} 〜 ${formatDate(excludeEndDate)}<br>
+              💰 参考謝礼: ${proj.参考謝礼 ? proj.参考謝礼 : '未設定'}
               ${!isSameCategory ? '<br>（カテゴリ違いのため対象外）' : ''}
             </span>
           </div>
